@@ -1,0 +1,99 @@
+class PersonalAssistantAgent:
+    def __init__(self, name="Assistant"):
+        self.name = name
+        self.internal_state = {
+            "mood": "neutral",
+            "knowledge_base": [],
+            "reminders": [],
+            "calendar_events": []
+        }
+        print(f"{self.name} initialized. Ready to assist!")
+
+    def sense(self, environment_input):
+        """Simulates sensing the environment."""
+        print(f"[{self.name}] Sensing: {environment_input}")
+        return environment_input
+
+    def interpret_perception(self, raw_perception):
+        """Processes raw sensor data and interprets user intent."""
+        # This is a highly simplified interpretation
+        if "hello" in raw_perception.lower():
+            return {"intent": "greet"}
+        elif "time" in raw_perception.lower():
+            return {"intent": "get_time"}
+        elif "weather" in raw_perception.lower():
+            return {"intent": "get_weather"}
+        elif "reminder" in raw_perception.lower():
+            task = raw_perception.split("reminder for ", 1)[-1]
+            return {"intent": "set_reminder", "task": task.strip()}
+        elif "schedule" in raw_perception.lower() or "event" in raw_perception.lower():
+            return {"intent": "check_schedule"}
+        elif "lights on" in raw_perception.lower():
+            return {"intent": "control_lights", "state": "on"}
+        else:
+            return {"intent": "unknown", "query": raw_perception}
+
+    def decide_action(self, interpreted_data):
+        """Decides on an action based on interpreted perceptions."""
+        intent = interpreted_data.get("intent")
+        action = {"type": "respond", "message": "I'm not sure how to help with that."}
+
+        if intent == "greet":
+            action["message"] = "Hello! How can I assist you today?"
+        elif intent == "get_time":
+            import datetime
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            action["message"] = f"The current time is {current_time}."
+        elif intent == "get_weather":
+            action["message"] = "Fetching weather data... It's sunny with 25°C in your location."
+        elif intent == "set_reminder":
+            task = interpreted_data.get("task", "a task")
+            self.internal_state["reminders"].append(task)
+            action["message"] = f"Okay, I've set a reminder for: {task}"
+        elif intent == "check_schedule":
+            if self.internal_state["calendar_events"]:
+                events = ", ".join(self.internal_state["calendar_events"])
+                action["message"] = f"You have the following events: {events}."
+            else:
+                action["message"] = "You have no upcoming events."
+        elif intent == "control_lights":
+            state = interpreted_data.get("state")
+            action["message"] = f"Turning lights {state}."
+        
+        print(f"[{self.name}] Deciding action: {action}")
+        return action
+
+    def execute_action(self, action):
+        """Performs the decided action using actuators."""
+        action_type = action.get("type")
+        if action_type == "respond":
+            print(f"[{self.name}] Actuator (Display): {action['message']}")
+        elif action_type == "set_alarm":
+            print(f"[{self.name}] Actuator (Alarm System): Setting alarm for {action['time']}")
+        elif action_type == "control_device":
+            print(f"[{self.name}] Actuator (Smart Home Hub): Executing command '{action['command']}'")
+        # Add more actuator simulations here
+
+    def run_cycle(self, user_input):
+        """Runs one full PEAS cycle."""
+        perceptions = self.sense(user_input)
+        interpreted_data = self.interpret_perception(perceptions)
+        action = self.decide_action(interpreted_data)
+        self.execute_action(action)
+        print("----------------------------------")
+
+# --- Simulation --- 
+# Create an agent instance
+assistant = PersonalAssistantAgent("MyPersonalAI")
+
+# Simulate interactions
+assistant.run_cycle("Hello, Assistant!")
+assistant.run_cycle("What time is it?")
+assistant.run_cycle("What's the weather like today?")
+assistant.run_cycle("Set a reminder for 'buy groceries at 5 PM'")
+assistant.run_cycle("Check my schedule for tomorrow")
+assistant.run_cycle("Turn the living room lights on")
+assistant.run_cycle("Tell me a joke") # Unknown intent
+
+# Demonstrate internal state update
+print(f"[{assistant.name}] Current reminders: {assistant.internal_state['reminders']}")
